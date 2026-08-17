@@ -1,24 +1,37 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
-import { ExternalLink } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { CheckCircle2, ExternalLink, XCircle } from 'lucide-react'
 import * as gscApi from '../../../api/gsc'
 import Button from '../../../components/common/Button'
 import Card from '../../../components/common/Card'
-import ErrorBanner from '../../../components/tools/ErrorBanner'
 
-// The backend's OAuth callback (/api/auth/google/callback) returns raw JSON
-// today, not a redirect back into the SPA — so the connect flow is handled
-// entirely on this side: open the consent URL in a popup and treat the
-// popup closing as "done". There's no dedicated "am I connected?" endpoint,
-// so this is optimistic — the next real GSC call is the actual source of
-// truth, and will re-prompt via the same connect flow if it wasn't.
+// The backend's OAuth callback (/api/auth/google/callback) now redirects
+// back to this exact page with `?connected=true` or `?connected=false&error=…`
+// once Google consent finishes — so this page does double duty: it's both
+// the "click to connect" starting point (opened normally) AND the landing
+// page the popup itself navigates to after the backend redirect (in which
+// case it shows the result and closes itself automatically).
 export default function ConnectGoogle() {
+  const [searchParams] = useSearchParams()
+  const redirectConnected = searchParams.get('connected') // "true" | "false" | null
+  const redirectError = searchParams.get('error')
+  const isPopup = typeof window !== 'undefined' && !!window.opener
+
   const [status, setStatus] = useState('idle') // idle | opening | waiting | connected | error
   const [error, setError] = useState(null)
   const [fallbackUrl, setFallbackUrl] = useState(null)
   const pollRef = useRef(null)
 
   useEffect(() => () => clearInterval(pollRef.current), [])
+
+  // Landed here because the backend just redirected after Google consent —
+  // this IS the popup window itself. Show the result briefly, then close so
+  // the main window's popup.closed check (below) picks it up.
+  useEffect(() => {
+    if (redirectConnected === null || !isPopup) return
+    const t = setTimeout(() => window.close(), redirectConnected === 'true' ? 1200 : 2500)
+    return () => clearTimeout(t)
+  }, [redirectConnected, isPopup])
 
   const handleConnect = async () => {
     setStatus('opening')
@@ -43,6 +56,45 @@ export default function ConnectGoogle() {
       setError(err)
       setStatus('error')
     }
+  }
+
+  // This page just got redirected to by the backend (popup or not) —
+  // render the result instead of the normal "click to connect" UI.
+  if (redirectConnected !== null) {
+    const success = redirectConnected === 'true'
+    return (
+      <div>
+        <h1 className="font-heading text-2xl font-normal text-text sm:text-3xl">Connect Google Search Console</h1>
+        <Card hoverGlow={false} className="mt-6 max-w-lg text-center">
+          {success ? (
+            <>
+              <CheckCircle2 size={32} className="mx-auto text-primary" />
+              <p className="mt-3 text-text">Google account connected.</p>
+              {isPopup ? (
+                <p className="mt-1 text-sm text-text-muted">This window will close automatically…</p>
+              ) : (
+                <Button as={Link} to="/app/gsc" variant="primary" className="mt-4">
+                  Continue to Search Console
+                </Button>
+              )}
+            </>
+          ) : (
+            <>
+              <XCircle size={32} className="mx-auto text-red-500" />
+              <p className="mt-3 text-text">Couldn't connect Google.</p>
+              {redirectError && <p className="mt-1 text-sm text-text-muted">{redirectError}</p>}
+              {isPopup ? (
+                <p className="mt-3 text-sm text-text-muted">This window will close automatically…</p>
+              ) : (
+                <Button as={Link} to="/app/gsc/connect" variant="primary" className="mt-4">
+                  Try again
+                </Button>
+              )}
+            </>
+          )}
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -83,7 +135,11 @@ export default function ConnectGoogle() {
             )}
           </>
         )}
-        {error && <div className="mt-4"><ErrorBanner error={error} /></div>}
+        {status === 'error' && error && (
+          <p className="mt-4 text-sm" style={{ color: 'var(--color-accent-orange)' }}>
+            {error.response?.data?.error ?? 'Something went wrong. Please try again.'}
+          </p>
+        )}
       </Card>
     </div>
   )
