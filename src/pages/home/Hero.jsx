@@ -6,6 +6,7 @@ import Container from '../../components/common/Container'
 import Button from '../../components/common/Button'
 import ScrambleText from '../../components/common/ScrambleText'
 import DashboardAssembly from '../../components/home/DashboardAssembly'
+import { useAuth } from '../../context/AuthContext'
 
 const POP_TRANSITION = { duration: 0.7, ease: [0.34, 1.56, 0.64, 1] }
 
@@ -24,6 +25,7 @@ const popUp = {
 ═══════════════════════════════════════════════════════════════════════════ */
 export default function Hero() {
   const [revealed, setRevealed] = useState(false)
+  const { isAuthenticated } = useAuth()
 
   return (
     <section
@@ -61,16 +63,16 @@ export default function Hero() {
           <motion.div variants={popUp} className="mt-7 flex flex-wrap justify-center gap-3">
             <Button
               as={Link}
-              to="/signup"
+              to={isAuthenticated ? '/app' : '/login'}
               variant="primary"
               size="lg"
               className="glow-md hover:glow-lg"
             >
-              <ScrambleText text="Start Free — No Card" />
-              <ArrowRight size={18} />
+              <ScrambleText text="Start Free" />
+              <ArrowRight size={18} className="transition-transform duration-300 group-hover:translate-x-1" />
             </Button>
             <Button as="a" href="#services" variant="outline" size="lg">
-              <ScrambleText text="Explore 9 Tools" />
+              <ScrambleText text="Explore Tools" />
             </Button>
           </motion.div>
         </motion.div>

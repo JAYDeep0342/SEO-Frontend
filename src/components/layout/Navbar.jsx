@@ -1,11 +1,13 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-import { Menu, Sparkles, X } from 'lucide-react'
+import { Link, useNavigate } from 'react-router-dom'
+import { LayoutGrid, LogOut, Menu, X } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Container from '../common/Container'
 import Button from '../common/Button'
 import ThemeToggle from '../common/ThemeToggle'
 import ScrambleText from '../common/ScrambleText'
+import Logo from '../common/Logo'
+import { useAuth } from '../../context/AuthContext'
 
 const NAV_LINKS = [
   { label: 'Home',     href: '#home' },
@@ -27,8 +29,22 @@ const mobileMenuVariants = {
   exit:    { opacity: 0, y: -12, scaleY: 0.95 },
 }
 
-export default function Navbar() {
+// `showActions` controls whether the theme toggle + login/signup (or
+// dashboard/logout) button cluster renders — AppLayout passes `false` since
+// those same controls live in its sidebar instead, avoiding duplication.
+// `leftAccessory` renders just before the logo — AppLayout uses it for its
+// own mobile "open tool sidebar" hamburger, distinct from this navbar's own
+// (marketing nav links) mobile menu toggle.
+export default function Navbar({ showActions = true, leftAccessory = null }) {
   const [open, setOpen] = useState(false)
+  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    setOpen(false)
+    navigate('/')
+  }
 
   return (
     <header className="relative z-50 w-full px-3 py-3 sm:px-6 sm:py-4">
@@ -36,15 +52,13 @@ export default function Navbar() {
       <div className="mx-auto max-w-7xl rounded-2xl border border-border-strong bg-bg/80 shadow-[0_4px_24px_var(--glow)] backdrop-blur-2xl transition-all duration-300 glass-panel">
         <Container className="flex h-16 items-center justify-between gap-3">
 
-          {/* Logo */}
-          <Link to="/" className="group flex shrink-0 items-center gap-2.5 font-heading text-lg font-normal text-text">
-            <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-primary-emerald to-primary text-[#061006] shadow-md shadow-[var(--glow)] transition-transform group-hover:scale-105">
-              <Sparkles size={18} className="animate-pulse" />
-            </span>
-            <span className="tracking-tight">
-              Rank<span className="text-primary font-normal">Helper</span>
-            </span>
-          </Link>
+          {/* Logo (+ optional accessory before it) — goes to the dashboard
+              if already signed in, or the login page otherwise, rather than
+              always bouncing back to the marketing homepage. */}
+          <div className="flex shrink-0 items-center gap-2">
+            {leftAccessory}
+            <Logo to={isAuthenticated ? '/app' : '/login'} />
+          </div>
 
           {/* Desktop nav */}
           <nav className="hidden items-center gap-3 rounded-full border border-primary/30 bg-surface-2/40 px-2 py-1.5 md:flex lg:gap-17 lg:px-3">
@@ -55,20 +69,36 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Desktop CTA */}
-          <div className="hidden shrink-0 items-center gap-7 md:flex">
-            <ThemeToggle />
-            <Button as={Link} to="/login" variant="ghost" size="sm">
-              <ScrambleText text="Log in" />
-            </Button>
-            <Button as={Link} to="/signup" variant="primary" size="sm">
-              <ScrambleText text="Get Started" />
-            </Button>
-          </div>
+          {showActions && (
+            <div className="hidden shrink-0 items-center gap-7 md:flex">
+              <ThemeToggle />
+              {isAuthenticated ? (
+                <>
+                  <Button as={Link} to="/app" variant="secondary" size="sm">
+                    <LayoutGrid size={15} />
+                    <ScrambleText text="Dashboard" />
+                  </Button>
+                  <Button variant="ghost" size="sm" onClick={handleLogout}>
+                    <LogOut size={15} />
+                    <ScrambleText text="Log out" />
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button as={Link} to="/login" variant="ghost" size="sm">
+                    <ScrambleText text="Log in" />
+                  </Button>
+                  <Button as={Link} to="/signup" variant="primary" size="sm">
+                    <ScrambleText text="Get Started" />
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Mobile controls */}
           <div className="flex items-center gap-2 md:hidden">
-            <ThemeToggle />
+            {showActions && <ThemeToggle />}
             <button
               type="button"
               onClick={() => setOpen((o) => !o)}
@@ -130,19 +160,36 @@ export default function Navbar() {
                   {link.label}
                 </motion.a>
               ))}
-              <motion.div
-                className="flex flex-col gap-2 pt-3 border-t border-border"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.28 }}
-              >
-                <Button as={Link} to="/login" variant="outline" size="sm" onClick={() => setOpen(false)}>
-                  Log in
-                </Button>
-                <Button as={Link} to="/signup" variant="primary" size="sm" onClick={() => setOpen(false)}>
-                  Get Started
-                </Button>
-              </motion.div>
+              {showActions && (
+                <motion.div
+                  className="flex flex-col gap-2 pt-3 border-t border-border"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.28 }}
+                >
+                  {isAuthenticated ? (
+                    <>
+                      <Button as={Link} to="/app" variant="outline" size="sm" onClick={() => setOpen(false)}>
+                        <LayoutGrid size={15} />
+                        Dashboard
+                      </Button>
+                      <Button variant="primary" size="sm" onClick={handleLogout}>
+                        <LogOut size={15} />
+                        Log out
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button as={Link} to="/login" variant="outline" size="sm" onClick={() => setOpen(false)}>
+                        Log in
+                      </Button>
+                      <Button as={Link} to="/signup" variant="primary" size="sm" onClick={() => setOpen(false)}>
+                        Get Started
+                      </Button>
+                    </>
+                  )}
+                </motion.div>
+              )}
             </Container>
           </motion.div>
         )}

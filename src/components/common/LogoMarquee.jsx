@@ -1,30 +1,24 @@
-import ahrefsLogo from '../../assets/logos/ahrefs.png'
-import semrushLogo from '../../assets/logos/semrush.png'
-import mozLogo from '../../assets/logos/moz.png'
-import gscLogo from '../../assets/logos/gsc.png'
-import screamingFrogLogo from '../../assets/logos/screamingfrog.png'
-import surferSeoLogo from '../../assets/logos/surferseo.png'
-import clearscopeLogo from '../../assets/logos/clearscope.png'
-import brightEdgeLogo from '../../assets/logos/brightedge.png'
-import seRankingLogo from '../../assets/logos/seranking.png'
-import mangoolsLogo from '../../assets/logos/mangools.png'
+import {
+  Braces, ClipboardCheck, FileCode2, FileText, Gauge, LineChart, Percent, Search, Tags,
+} from 'lucide-react'
 
-// Pure CSS infinite marquee — no external dependency, zero CJS/ESM issues
-const LOGOS = [
-  { name: 'Ahrefs',         logo: ahrefsLogo },
-  { name: 'SEMrush',        logo: semrushLogo },
-  { name: 'Moz Pro',        logo: mozLogo },
-  { name: 'Google GSC',     logo: gscLogo },
-  { name: 'Screaming Frog', logo: screamingFrogLogo },
-  { name: 'Surfer SEO',     logo: surferSeoLogo },
-  { name: 'Clearscope',     logo: clearscopeLogo },
-  { name: 'BrightEdge',     logo: brightEdgeLogo },
-  { name: 'SE Ranking',     logo: seRankingLogo },
-  { name: 'Mangools',       logo: mangoolsLogo },
+// The product's own 9 real tools (matches Backend/Seo's actual API
+// controllers — Keyword/Content/Audit/PageSpeed/MetaTag/Schema/OnPage/
+// Robots/Gsc — not third-party competitor names).
+const TOOLS = [
+  { name: 'Keyword Research', icon: Search },
+  { name: 'Content Generator', icon: FileText },
+  { name: 'Technical Audit', icon: ClipboardCheck },
+  { name: 'PageSpeed Insights', icon: Gauge },
+  { name: 'Meta Tag Generator', icon: Tags },
+  { name: 'Schema Markup', icon: Braces },
+  { name: 'On-Page SEO Score', icon: Percent },
+  { name: 'robots.txt Analyzer', icon: FileCode2 },
+  { name: 'Search Console Insights', icon: LineChart },
 ]
 
 // We duplicate the list so the CSS loop looks seamless
-const TRACK = [...LOGOS, ...LOGOS]
+const TRACK = [...TOOLS, ...TOOLS]
 
 export default function LogoMarquee({ className = '' }) {
   return (
@@ -35,7 +29,7 @@ export default function LogoMarquee({ className = '' }) {
 
       {/* Label */}
       <p className="mb-4 text-center text-xs font-normal uppercase tracking-widest text-text-muted">
-        Works alongside your favourite tools
+        One suite, nine powerful tools
       </p>
 
       {/* Scrolling track */}
@@ -48,12 +42,14 @@ export default function LogoMarquee({ className = '' }) {
         onMouseEnter={(e) => (e.currentTarget.style.animationPlayState = 'paused')}
         onMouseLeave={(e) => (e.currentTarget.style.animationPlayState = 'running')}
       >
-        {TRACK.map(({ name, logo }, i) => (
+        {TRACK.map(({ name, icon: Icon }, i) => (
           <div
             key={`${name}-${i}`}
             className="flex shrink-0 items-center gap-2.5 rounded-full border border-border bg-surface-card/70 px-5 py-2.5 text-sm font-normal text-text-secondary shadow-sm backdrop-blur-sm transition-all hover:border-primary/40 hover:text-primary hover:shadow-[0_0_14px_var(--glow)]"
           >
-            <img src={logo} alt={name} className="h-5 w-5 shrink-0 rounded-md object-contain" draggable={false} />
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+              <Icon size={13} />
+            </span>
             <span>{name}</span>
           </div>
         ))}

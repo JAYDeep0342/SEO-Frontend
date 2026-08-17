@@ -1,7 +1,6 @@
 import Hero from './home/Hero'
 import About from './home/About'
 import Services from './home/Services'
-import Features from './home/Features'
 import LogoMarquee from '../components/common/LogoMarquee'
 import ComparisonChart from '../components/home/ComparisonChart'
 import TerminalCard from '../components/home/TerminalCard'
@@ -50,9 +49,6 @@ export default function Home() {
 
       {/* ── Services ── */}
       <Services />
-
-      {/* ── Features ── */}
-      <Features />
     </>
   )
 }
