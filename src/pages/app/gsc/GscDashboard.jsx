@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { PlugZap, Search } from 'lucide-react'
 import * as gscApi from '../../../api/gsc'
 import { useApi } from '../../../hooks/useApi'
-import { defaultGscRange, isValidSiteUrl } from '../../../utils/dateRange'
+import { defaultGscRange, isValidSiteUrl, normalizeSiteUrl } from '../../../utils/dateRange'
 import { isGscNotConnected } from '../../../utils/errors'
 import { getToolCache, setToolCache } from '../../../utils/toolCache'
 import Input from '../../../components/common/Input'
@@ -192,14 +192,15 @@ export default function GscDashboard() {
       return
     }
     if (!isValidSiteUrl(siteUrl)) {
-      setSiteUrlError('Site URL must start with http://, https://, or sc-domain:')
+      setSiteUrlError('Please enter a valid domain or URL.')
       return
     }
     setSiteUrlError(null)
-    const payload = { siteUrl: siteUrl.trim(), startDate, endDate }
+    const normalized = normalizeSiteUrl(siteUrl)
+    const payload = { siteUrl: normalized, startDate, endDate }
     apiForTab[activeTab].run(payload)
     setLastFetchedKey((prev) => ({ ...prev, [activeTab]: currentKey }))
-    checkApi.run({ siteUrl: siteUrl.trim() }).catch(() => {})
+    checkApi.run({ siteUrl: normalized }).catch(() => {})
   }
 
   const handleTabChange = (tab) => {
@@ -207,7 +208,7 @@ export default function GscDashboard() {
     // Lazy per-tab fetch — only re-hits the API if this tab hasn't been
     // loaded yet for the current site/date-range combination.
     if (siteUrl.trim() && isValidSiteUrl(siteUrl) && lastFetchedKey[tab] !== currentKey) {
-      apiForTab[tab].run({ siteUrl: siteUrl.trim(), startDate, endDate })
+      apiForTab[tab].run({ siteUrl: normalizeSiteUrl(siteUrl), startDate, endDate })
       setLastFetchedKey((prev) => ({ ...prev, [tab]: currentKey }))
     }
   }
@@ -252,7 +253,7 @@ export default function GscDashboard() {
           <Input
             label="Site URL"
             type="text"
-            placeholder="https://example.com/ or sc-domain:example.com"
+            placeholder="example.com"
             value={siteUrl}
             onChange={(e) => setSiteUrl(e.target.value)}
             className="min-w-[260px] flex-1"
@@ -295,7 +296,7 @@ export default function GscDashboard() {
         {!active.loading && active.error && (
           isGscNotConnected(active.error)
             ? <ConnectPrompt />
-            : <ErrorBanner error={active.error} onRetry={() => apiForTab[activeTab].run({ siteUrl: siteUrl.trim(), startDate, endDate })} />
+            : <ErrorBanner error={active.error} onRetry={() => apiForTab[activeTab].run({ siteUrl: normalizeSiteUrl(siteUrl), startDate, endDate })} />
         )}
         {!active.loading && !active.error && !active.data && (
           <EmptyState icon={Search} title="Run a report" description="Enter a site URL and date range above, then hit Run." />

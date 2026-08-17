@@ -29,6 +29,8 @@ const mobileMenuVariants = {
   exit:    { opacity: 0, y: -12, scaleY: 0.95 },
 }
 
+const MotionLink = motion.create(Link)
+
 // `showActions` controls whether the theme toggle + login/signup (or
 // dashboard/logout) button cluster renders — AppLayout passes `false` since
 // those same controls live in its sidebar instead, avoiding duplication.
@@ -60,12 +62,16 @@ export default function Navbar({ showActions = true, leftAccessory = null }) {
             <Logo to={isAuthenticated ? '/app' : '/login'} />
           </div>
 
-          {/* Desktop nav */}
+          {/* Desktop nav — routes to "/" + the section hash rather than a
+              plain #anchor, so clicking these from /login, /app/*, etc.
+              actually navigates home first instead of just appending a
+              hash to whatever page you're already on (Home.jsx scrolls to
+              the matching section once it mounts). */}
           <nav className="hidden items-center gap-3 rounded-full border border-primary/30 bg-surface-2/40 px-2 py-1.5 md:flex lg:gap-17 lg:px-3">
             {NAV_LINKS.map((link) => (
-              <a key={link.href} href={link.href} className={navLinkClass()}>
+              <Link key={link.href} to={`/${link.href}`} className={navLinkClass()}>
                 <ScrambleText text={link.label} />
-              </a>
+              </Link>
             ))}
           </nav>
 
@@ -148,9 +154,9 @@ export default function Navbar({ showActions = true, leftAccessory = null }) {
           >
             <Container className="flex flex-col gap-2 py-5">
               {NAV_LINKS.map((link, i) => (
-                <motion.a
+                <MotionLink
                   key={link.href}
-                  href={link.href}
+                  to={`/${link.href}`}
                   onClick={() => setOpen(false)}
                   className={navLinkClass({ mobile: true })}
                   initial={{ opacity: 0, x: -16 }}
@@ -158,7 +164,7 @@ export default function Navbar({ showActions = true, leftAccessory = null }) {
                   transition={{ delay: i * 0.06 + 0.05, duration: 0.25 }}
                 >
                   {link.label}
-                </motion.a>
+                </MotionLink>
               ))}
               {showActions && (
                 <motion.div

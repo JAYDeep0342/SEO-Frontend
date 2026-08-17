@@ -10,8 +10,23 @@ export function defaultGscRange() {
 }
 
 // No "list my properties" endpoint exists — the site picker is a plain text
-// field, so catch the most common wrong-format mistakes before a guaranteed
-// verified:false round trip.
+// field. Accept either the exact GSC-formatted value (http(s):// or
+// sc-domain:) or just a bare domain — bare domains get auto-formatted by
+// normalizeSiteUrl below, so the user never has to type "sc-domain:" by hand.
 export function isValidSiteUrl(value) {
-  return /^(https?:\/\/|sc-domain:)/.test(value.trim())
+  const trimmed = value.trim()
+  if (/^(https?:\/\/|sc-domain:)/i.test(trimmed)) return true
+  return /^[a-z0-9-]+(\.[a-z0-9-]+)+\/?$/i.test(trimmed)
+}
+
+// Google Search Console requires siteUrl to match exactly how the property
+// is registered — either "sc-domain:example.com" (domain property) or
+// "https://www.example.com/" (URL-prefix property, trailing slash). Most
+// modern GSC properties are domain properties, so a bare domain the user
+// types (e.g. "example.com") is assumed to be one and auto-prefixed —
+// already-formatted input (http(s):// or sc-domain:) passes through as-is.
+export function normalizeSiteUrl(value) {
+  const trimmed = value.trim()
+  if (/^(https?:\/\/|sc-domain:)/i.test(trimmed)) return trimmed
+  return `sc-domain:${trimmed}`
 }

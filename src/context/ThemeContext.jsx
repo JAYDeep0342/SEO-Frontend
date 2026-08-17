@@ -5,7 +5,10 @@ const ThemeContext = createContext(null)
 function getInitialTheme() {
   const stored = localStorage.getItem('theme')
   if (stored === 'light' || stored === 'dark') return stored
-  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  // Always default to light for first-time visitors — no longer follows OS
+  // dark-mode preference. Users can still switch manually via ThemeToggle,
+  // and their explicit choice is remembered from then on.
+  return 'light'
 }
 
 export function ThemeProvider({ children }) {

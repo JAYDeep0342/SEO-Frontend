@@ -1,3 +1,5 @@
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import Hero from './home/Hero'
 import About from './home/About'
 import Services from './home/Services'
@@ -8,6 +10,22 @@ import RevealBox from '../components/common/RevealBox'
 import Container from '../components/common/Container'
 
 export default function Home() {
+  const { hash } = useLocation()
+
+  // Navbar's Home/Services/About links route here as "/#section" (a real
+  // route change from /login, /app/*, etc.) rather than a plain #anchor —
+  // once this page mounts, scroll to the matching section ourselves, since
+  // client-side navigation doesn't trigger the browser's native hash-jump.
+  useEffect(() => {
+    if (!hash) return
+    const el = document.querySelector(hash)
+    if (!el) return
+    const id = requestAnimationFrame(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [hash])
+
   return (
     <>
       {/* ── Hero ── */}
